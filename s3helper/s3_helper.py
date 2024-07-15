@@ -3,6 +3,9 @@ import boto3
 import logging
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 import sys
+import logging
+from datasets import load_dataset, Dataset
+from typing import Optional, Dict, Any
 
 # Configure logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -76,6 +79,18 @@ class S3Helper:
                 s3_key = os.path.relpath(local_file_path, local_dir)
                 self.s3_client.upload_file(local_file_path, bucket_name, os.path.join(model_name, s3_key))
                 logging.info(f'Uploaded {local_file_path} to s3://{bucket_name}/{model_name}/{s3_key}')
+    def download_dataset(self, path_components: list, local_dir: str = './datasets'):
+        bucket_name = path_components[0]
+        dataset_name = path_components[1]
+        objects = self.s3_client.list_objects_v2(Bucket=bucket_name, Prefix=dataset_name)
+        for obj in objects.get('Contents', []):
+            file_key = obj['Key']
+            if file_key.endswith('/'):
+                continue  # Skip directories
+            file_path = os.path.join(local_dir, bucket_name, file_key)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            self.s3_client.download_file(bucket_name, file_key, file_path)
+            logging.info(f'Downloaded dataset file: {file_key}')
 
 class S3HelperAutoModelForCausalLM(AutoModelForCausalLM):
     @classmethod
@@ -97,3 +112,46 @@ class S3HelperAutoConfig(AutoConfig):
         s3_helper = S3Helper.get_instance()
         config_local_path = s3_helper.ensure_model_local(pretrained_model_name_or_path, local_dir)
         return super().from_pretrained(config_local_path, *model_args, **kwargs)
+# defined a custom load_dataset from S3 bucket
+def s3_load_dataset(
+    path: str,
+    local_dir: str = './datasets',
+    file_format: str = 'json',
+    *args: Any,
+    **kwargs: Any
+) -> Dataset:
+    """
+    Load a dataset from S3/Minio storage.
+
+    Args:
+        path (str): Path to the dataset in the format 'bucket_name/dataset_name'
+        local_dir (str): Local directory to store downloaded datasets
+        file_format (str): Format of the dataset file (e.g., 'json', 'csv', 'parquet')
+        *args: Additional positional arguments to pass to load_dataset
+        **kwargs: Additional keyword arguments to pass to load_dataset
+
+    Returns:
+        Dataset: The loaded dataset
+    """
+    s3_helper = S3Helper.get_instance()
+    
+    # Split the path into bucket and dataset name
+    path_components = path.split("/")
+    if len(path_components) != 2:
+        raise ValueError("Path should be in the format 'bucket_name/dataset_name'")
+    
+    bucket_name, dataset_name = path_components
+    dataset_local_path = os.path.join(local_dir, bucket_name, dataset_name)
+
+    # Download dataset if not exists locally
+    if not os.path.exists(dataset_local_path):
+        os.makedirs(dataset_local_path, exist_ok=True)
+        s3_helper.download_dataset(path_components, local_dir)
+    else:
+        logging.info(f"Dataset already exists at: {dataset_local_path}, using cached version")
+
+    # Construct the path to the data file
+    data_file_path = os.path.join(dataset_local_path, f"data.{file_format}")
+    
+    # Load and return the dataset
+    return load_dataset(file_format, data_files=data_file_path, *args, **kwargs)
