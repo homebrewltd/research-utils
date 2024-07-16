@@ -10,11 +10,6 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install MinIO client
-RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc \
-    && chmod +x mc \
-    && mv mc /usr/local/bin/mc
-
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
   unzip awscliv2.zip && \
   ./aws/install

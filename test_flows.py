@@ -2,9 +2,9 @@ from s3helper import S3Helper,S3HelperAutoConfig,S3HelperAutoTokenizer,S3HelperA
 import os
 import logging
 
-os.environ['S3_ACCESS_KEY'] = 'minioadmin'
-os.environ['S3_SECRET_KEY'] = 'minioadmin'
-os.environ['S3_ENDPOINT_URL'] = 'http://172.17.0.2:9000'
+# os.environ['S3_ACCESS_KEY'] = 'minioadmin'
+# os.environ['S3_SECRET_KEY'] = 'minioadmin'
+# os.environ['S3_ENDPOINT_URL'] = 'http://172.17.0.2:9000'
 S3Helper()
 
 # # Example usage
