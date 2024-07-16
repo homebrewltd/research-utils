@@ -5,8 +5,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 import sys
 import logging
 from datasets import load_dataset, Dataset, load_from_disk
-from typing import Optional, Dict, Any
-
+from typing import Optional, Dict, Any, List
 # Configure logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)s - %(message)s')
 
@@ -81,9 +80,10 @@ class S3Helper:
             os.makedirs(file_local_path, exist_ok=True)
             self.download_file(path_components, local_dir)
         else:
-            if 'model' in file_name_or_path:
+            if 'model' in local_dir.lower():
+                
                 logging.info(f"Model existed at: {file_local_path}, read from cache")
-            elif 'dataset' in file_name_or_path:
+            elif 'dataset' in local_dir.lower():
                 logging.info(f"Dataset existed at: {file_local_path}, read from cache")
         return file_local_path
 
@@ -111,56 +111,72 @@ class S3HelperAutoModelForCausalLM(AutoModelForCausalLM):
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path, *model_args, local_dir: str = './models', **kwargs):
         s3_helper = S3Helper.get_instance()
-        model_local_path = s3_helper.ensure_model_local(pretrained_model_name_or_path, local_dir)
+        model_local_path = s3_helper.ensure_file_local(pretrained_model_name_or_path, local_dir)
         return super().from_pretrained(model_local_path, *model_args, **kwargs)
 
 class S3HelperAutoTokenizer(AutoTokenizer):
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path, *model_args, local_dir: str = './models', **kwargs):
         s3_helper = S3Helper.get_instance()
-        tokenizer_local_path = s3_helper.ensure_model_local(pretrained_model_name_or_path, local_dir)
+        tokenizer_local_path = s3_helper.ensure_file_local(pretrained_model_name_or_path, local_dir)
         return super().from_pretrained(tokenizer_local_path, *model_args, **kwargs)
 
 class S3HelperAutoConfig(AutoConfig):
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path, *model_args, local_dir: str = './models', **kwargs):
         s3_helper = S3Helper.get_instance()
-        config_local_path = s3_helper.ensure_model_local(pretrained_model_name_or_path, local_dir)
+        config_local_path = s3_helper.ensure_file_local(pretrained_model_name_or_path, local_dir)
         return super().from_pretrained(config_local_path, *model_args, **kwargs)
 # defined a custom load_dataset from S3 bucket
 def s3_load_dataset(
     dataset_name_or_path: str,
     file_format: str = 'json',
     local_dir: str = './datasets',
+    split: str = None,
     *args: Any,
     **kwargs: Any
 ) -> Dataset:
     """
     Load a dataset from S3/Minio storage.
-
     Args:
-        path (str): Path to the dataset in the format 'bucket_name/dataset_name'
-        file_format: File format of the dataset. Either 'json' or 'csv' or 'parquet'.
-        local_dir (str): Local directory to store downloaded datasets
-        *args: Additional positional arguments to pass to load_dataset
-        **kwargs: Additional keyword arguments to pass to load_dataset
-
+    dataset_name_or_path (str): Path to the dataset in the format 'bucket_name/dataset_name'
+    file_format (str): File format of the dataset. Either 'json', 'csv', or 'parquet'.
+    local_dir (str): Local directory to store downloaded datasets
+    split (str): Dataset split to load ('train', 'test', or None for all)
+    *args: Additional positional arguments to pass to load_dataset
+    **kwargs: Additional keyword arguments to pass to load_dataset
     Returns:
-        Dataset: The loaded dataset
+    Dataset: The loaded dataset
     """
     s3_helper = S3Helper.get_instance()
-    # Split the path into bucket and dataset name
-    dataset_local_path = ensure_file_local(dataset_name_or_path, local_dir)
+    dataset_local_path = s3_helper.ensure_file_local(dataset_name_or_path, local_dir)
+    
+    def find_files(path: str, extension: str) -> List[str]:
+        return [os.path.join(root, file) for root, _, files in os.walk(path) 
+                for file in files if file.endswith(f'.{extension}')]
+    
     local_files = find_files(dataset_local_path, file_format)
-    dataset_local_paths = [os.path.join(dataset_local_path, file) for file in local_files]
-    train_local_paths = []
-    test_local_paths = []   
-    for file in dataset_local_paths:
+    logging.info(f"Found local files: {local_files}")
+    
+    data_files: Dict[str, List[str]] = {"train": [], "test": []}
+    for file in local_files:
         if "train" in file:
-            train_local_paths.append(file)
+            data_files["train"].append(file)
         elif "test" in file:
-            test_local_paths.append(file)
+            data_files["test"].append(file)
         else:
-            raise ValueError("Not Implemented")
-    # Load and return the dataset
-    return load_dataset(file_format, data_files={'train': train_local_paths, "test": test_local_paths}, *args, **kwargs)
+            logging.warning(f"Unclassified file: {file}")
+    
+    if split:
+        if split not in data_files:
+            raise ValueError(f"Invalid split: {split}. Available splits are: {list(data_files.keys())}")
+        data_files = {split: data_files[split]}
+    
+    # Remove empty splits
+    data_files = {k: v for k, v in data_files.items() if v}
+    
+    if not data_files:
+        raise ValueError(f"No valid files found for the specified format and split.")
+    
+    logging.info(f"Loading dataset with data_files: {data_files}")
+    return load_dataset(file_format, data_files=data_files, *args, **kwargs)

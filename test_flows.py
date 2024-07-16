@@ -7,10 +7,11 @@ os.environ['S3_ENDPOINT_URL'] = 'http://172.17.0.2:9000'
 S3Helper()
 
 # # Example usage
-# model_name = "thunghiem/tinyllama"
+model_name = "jan-hq/tokenizer-tinyllama"
 # model = S3HelperAutoModelForCausalLM.from_pretrained(model_name)
-# tokenizer = S3HelperAutoTokenizer.from_pretrained(model_name)
+tokenizer = S3HelperAutoTokenizer.from_pretrained(model_name)
+# print(tokenizer)
 # config = S3HelperAutoConfig.from_pretrained(model_name)
 # Make sure S3Helper is initialized and environment variables are set
 # Load a dataset from S3 bucket
-dataset = s3_load_dataset("jan-hq/test_dataset",file_format='parquet', split='train')
+dataset = s3_load_dataset("jan-hq/test-dataset",file_format='parquet', split='train')
