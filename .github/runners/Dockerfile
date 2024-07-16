@@ -1,17 +1,19 @@
-FROM docker.io/pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+FROM python:3.11-slim
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-    build-essential \
-    cmake \
-    sudo \
-    unzip \
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
     curl \
-    wget \
+    tar \
+    unzip \
     git \
-    git-lfs \
     jq \
-  && rm -rf /var/lib/apt/lists/*
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install MinIO client
+RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc \
+    && chmod +x mc \
+    && mv mc /usr/local/bin/mc
 
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
   unzip awscliv2.zip && \
