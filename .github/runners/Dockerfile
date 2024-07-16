@@ -1,14 +1,19 @@
 FROM python:3.11-slim
 
 # Install necessary packages
-RUN apt-get update && apt-get install -y \
-    curl \
-    tar \
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    sudo \
     unzip \
-    git \
-    jq \
+    curl \
     wget \
-    && rm -rf /var/lib/apt/lists/*
+    git \
+    git-lfs \
+    jq \
+  && rm -rf /var/lib/apt/lists/*
+
 
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
   unzip awscliv2.zip && \
