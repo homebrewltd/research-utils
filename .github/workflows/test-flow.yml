@@ -8,8 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: - ubuntu-latest
-             - research
+    runs-on: research
     
     steps:
     - uses: actions/checkout@v4
