@@ -41,9 +41,6 @@ ADD ./start.sh /home/runner/start.sh
 
 RUN chmod +x /home/runner/start.sh
 
-# Add /usr/local/cuda-11.7/compat to LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH=/usr/local/cuda-12.1/compat${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-
 ENTRYPOINT ["/bin/bash", "/home/runner/start.sh"]
 
 USER runner
