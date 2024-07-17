@@ -8,7 +8,7 @@ import logging
 S3Helper()
 
 # # Example usage
-model_name = "jan-hq/tokenizer-tinyllama"
+model_name = "jan-hq-test/tokenizer-tinyllama"
 # model = S3HelperAutoModelForCausalLM.from_pretrained(model_name)
 tokenizer = S3HelperAutoTokenizer.from_pretrained(model_name)
 logging.info(f"Tokenizer Loading successful: {tokenizer}")
@@ -16,5 +16,5 @@ logging.info(f"Tokenizer Loading successful: {tokenizer}")
 # config = S3HelperAutoConfig.from_pretrained(model_name)
 # Make sure S3Helper is initialized and environment variables are set
 # Load a dataset from S3 bucket
-dataset = s3_load_dataset("jan-hq/test-dataset",file_format='parquet', split='train')
+dataset = s3_load_dataset("jan-hq-test/test-dataset",file_format='parquet', split='train')
 logging.info(f"Dataset Loading successful")
