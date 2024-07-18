@@ -86,16 +86,16 @@ class TestS3Helper(unittest.TestCase):
         S3Helper()
 
     @test_name("Tokenizer Loading Test")
-    @patch('s3helper.S3HelperAutoTokenizer.from_pretrained')
-    def test_tokenizer_loading(self, mock_from_pretrained):
-        mock_tokenizer = MagicMock()
-        mock_from_pretrained.return_value = mock_tokenizer
+    # @patch('s3helper.S3HelperAutoTokenizer.from_pretrained')
+    def test_tokenizer_loading(self):
+        # mock_tokenizer = MagicMock()
+        # mock_from_pretrained.return_value = mock_tokenizer
 
         tokenizer = S3HelperAutoTokenizer.from_pretrained(self.model_name)
         
-        mock_from_pretrained.assert_called_once_with(self.model_name)
+        # mock_from_pretrained.assert_called_once_with(self.model_name)
         self.assertIsNotNone(tokenizer)
-        self.assertEqual(tokenizer, mock_tokenizer)
+        # self.assertEqual(tokenizer, mock_tokenizer)
 
     @test_name("Dataset Loading Test")
     # @patch('s3helper.s3_load_dataset')
@@ -107,28 +107,22 @@ class TestS3Helper(unittest.TestCase):
         except Exception as e:
             self.fail(f"s3_load_dataset raised an exception: {e}")
     @test_name("Config Loading Test")
-    @patch('s3helper.S3HelperAutoConfig.from_pretrained')
-    def test_config_loading(self, mock_from_pretrained):
-        mock_config = MagicMock()
-        mock_from_pretrained.return_value = mock_config
+    def test_config_loading(self):
 
         config = S3HelperAutoConfig.from_pretrained(self.model_name)
-        
-        mock_from_pretrained.assert_called_once_with(self.model_name)
         self.assertIsNotNone(config)
-        self.assertEqual(config, mock_config)
 
     @test_name("Model Loading Test")
     @patch('s3helper.S3HelperAutoModelForCausalLM.from_pretrained')
-    def test_model_loading(self, mock_from_pretrained):
-        mock_model = MagicMock()
-        mock_from_pretrained.return_value = mock_model
+    def test_model_loading(self):
+        # mock_model = MagicMock()
+        # mock_from_pretrained.return_value = mock_model
 
         model = S3HelperAutoModelForCausalLM.from_pretrained(self.model_name)
         
-        mock_from_pretrained.assert_called_once_with(self.model_name)
+        # mock_from_pretrained.assert_called_once_with(self.model_name)
         self.assertIsNotNone(model)
-        self.assertEqual(model, mock_model)
+        # self.assertEqual(model, mock_model)
 if __name__ == '__main__':
     runner = CustomTestRunner()
     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestS3Helper)
