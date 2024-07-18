@@ -98,7 +98,7 @@ class TestS3Helper(unittest.TestCase):
         self.assertEqual(tokenizer, mock_tokenizer)
 
     @test_name("Dataset Loading Test")
-    @patch('s3helper.s3_load_dataset')
+    # @patch('s3helper.s3_load_dataset')
     def test_dataset_loading(self):
         try:
             dataset = s3_load_dataset(self.dataset_name, file_format='parquet', split='train')
