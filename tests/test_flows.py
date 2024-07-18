@@ -113,7 +113,7 @@ class TestS3Helper(unittest.TestCase):
         self.assertIsNotNone(config)
 
     @test_name("Model Loading Test")
-    @patch('s3helper.S3HelperAutoModelForCausalLM.from_pretrained')
+    # @patch('s3helper.S3HelperAutoModelForCausalLM.from_pretrained')
     def test_model_loading(self):
         # mock_model = MagicMock()
         # mock_from_pretrained.return_value = mock_model
