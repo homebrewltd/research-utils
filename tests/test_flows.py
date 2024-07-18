@@ -89,7 +89,7 @@ class TestS3Helper(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Set up any necessary test environment
-        cls.model_name_or_path = "jan-hq-test/tinyllama-v1.1"
+        cls.model_name_or_path = "jan-hq-test/tokenizer-tinyllama"
         cls.dataset_name_or_path = "jan-hq-test/test-dataset"
         
 
