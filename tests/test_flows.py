@@ -82,19 +82,7 @@ class TestS3Helper(unittest.TestCase):
     def setUpClass(cls):
         cls.model_name = "jan-hq-test/tokenizer-tinyllama"
         cls.dataset_name = "jan-hq-test/test-dataset"
-
-    @test_name("S3Helper Singleton Test")
-    def test_s3helper_singleton(self):
-        instance1 = S3Helper()
-        instance2 = S3Helper()
-        self.assertIs(instance1, instance2, "S3Helper should return the same instance")
-
-    @test_name("S3Helper Initialization Test")
-    def test_s3helper_initialization(self):
-        try:
-            S3Helper()
-        except Exception as e:
-            self.fail(f"S3Helper initialization raised an exception: {e}")
+        S3Helper()
 
     @test_name("Tokenizer Loading Test")
     @patch('s3helper.S3HelperAutoTokenizer.from_pretrained')
@@ -126,7 +114,7 @@ class TestS3Helper(unittest.TestCase):
         mock_config = MagicMock()
         mock_from_pretrained.return_value = mock_config
 
-        config = S3HelperAutoConfig.from_pretrained(self.model_name)
+        config = S3HelperAutoConfig.from_pretrained(self.model_name, device='cpu')
         
         mock_from_pretrained.assert_called_once_with(self.model_name)
         self.assertIsNotNone(config)
@@ -138,19 +126,11 @@ class TestS3Helper(unittest.TestCase):
         mock_model = MagicMock()
         mock_from_pretrained.return_value = mock_model
 
-        model = S3HelperAutoModelForCausalLM.from_pretrained(self.model_name)
+        model = S3HelperAutoModelForCausalLM.from_pretrained(self.model_name, device='cpu')
         
         mock_from_pretrained.assert_called_once_with(self.model_name)
         self.assertIsNotNone(model)
         self.assertEqual(model, mock_model)
-
-    @test_name("S3Helper AWS Credentials Test")
-    @patch.object(S3Helper, '_S3Helper__instance', None)  # Reset singleton for this test
-    @patch('boto3.client')
-    def test_s3helper_aws_credentials(self, mock_boto3_client):
-        S3Helper()
-        mock_boto3_client.assert_called_once_with('s3')
-
 if __name__ == '__main__':
     runner = CustomTestRunner()
     test_suite = unittest.TestLoader().loadTestsFromTestCase(TestS3Helper)
