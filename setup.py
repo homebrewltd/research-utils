@@ -13,10 +13,10 @@ setup(
     install_requires=[
         'boto3',
         # tokenizers >=0.13.3
-        'torch',
         'tokenizers==0.13.3',
         'transformers',
-        'datasets==2.20.0',  # Add the datasets library
+        'datasets==2.20.0', 
+        'torch', # Add the datasets library
     ],
     classifiers=[
         'Programming Language :: Python :: 3',
