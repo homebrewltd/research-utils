@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='research-utils',
-    version='0.2.1',  # Increment the version number
+    version='0.2.2',  # Increment the version number
     description='A helper library for working with S3/Minio, Hugging Face models, and datasets',
     long_description='This library provides utilities for downloading and managing machine learning models and datasets from S3-compatible storage services, and loading them using the Hugging Face libraries.',
     author='Alan',
@@ -13,6 +13,7 @@ setup(
     install_requires=[
         'boto3',
         # tokenizers >=0.13.3
+        'torch',
         'tokenizers==0.13.3',
         'transformers',
         'datasets==2.20.0',  # Add the datasets library

@@ -114,7 +114,7 @@ class TestS3Helper(unittest.TestCase):
         mock_config = MagicMock()
         mock_from_pretrained.return_value = mock_config
 
-        config = S3HelperAutoConfig.from_pretrained(self.model_name, device='cpu')
+        config = S3HelperAutoConfig.from_pretrained(self.model_name)
         
         mock_from_pretrained.assert_called_once_with(self.model_name)
         self.assertIsNotNone(config)
