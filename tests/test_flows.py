@@ -99,16 +99,13 @@ class TestS3Helper(unittest.TestCase):
 
     @test_name("Dataset Loading Test")
     @patch('s3helper.s3_load_dataset')
-    def test_dataset_loading(self, mock_s3_load_dataset):
-        mock_dataset = MagicMock()
-        mock_s3_load_dataset.return_value = mock_dataset
-
-        dataset = s3_load_dataset(self.dataset_name, file_format='parquet', split='train')
-        print(dataset)
-        # mock_s3_load_dataset.assert_called_once_with(self.dataset_name, file_format='parquet', split='train')
-        self.assertIsNotNone(dataset)
-        # self.assertEqual(dataset, mock_dataset)
-
+    def test_dataset_loading(self):
+        try:
+            dataset = s3_load_dataset(self.dataset_name, file_format='parquet', split='train')
+            print(dataset)
+            self.assertIsNotNone(dataset)
+        except Exception as e:
+            self.fail(f"s3_load_dataset raised an exception: {e}")
     @test_name("Config Loading Test")
     @patch('s3helper.S3HelperAutoConfig.from_pretrained')
     def test_config_loading(self, mock_from_pretrained):
