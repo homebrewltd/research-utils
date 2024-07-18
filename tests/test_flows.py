@@ -1,16 +1,9 @@
 import unittest
-import os
 from unittest.mock import patch, MagicMock
-from io import StringIO
+import logging
 import time
-from s3helper import (
-    S3Helper,
-    S3HelperAutoConfig,
-    S3HelperAutoTokenizer,
-    S3HelperAutoModelForCausalLM,
-    s3_load_dataset,
-)
-import sys
+from io import StringIO
+from s3helper import S3Helper, S3HelperAutoConfig, S3HelperAutoTokenizer, S3HelperAutoModelForCausalLM, s3_load_dataset
 
 class CustomTestResult(unittest.TestResult):
     def __init__(self, *args, **kwargs):
@@ -57,7 +50,6 @@ class CustomTestRunner(unittest.TextTestRunner):
 
         print("\nDetailed Results:")
         for result, time_taken in self.results:
-            # todo: add time taken for each test
             for test in result.successes:
                 print(f"PASS: {test._testMethodName}")
             for test, _ in result.failures:
@@ -88,62 +80,79 @@ def test_name(name):
 class TestS3Helper(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Set up any necessary test environment
-        cls.model_name_or_path = "jan-hq-test/tokenizer-tinyllama"
-        cls.dataset_name_or_path = "jan-hq-test/test-dataset"
-        
+        cls.model_name = "jan-hq-test/tokenizer-tinyllama"
+        cls.dataset_name = "jan-hq-test/test-dataset"
 
-    @test_name("Connect to Minio")
+    @test_name("S3Helper Singleton Test")
+    def test_s3helper_singleton(self):
+        instance1 = S3Helper()
+        instance2 = S3Helper()
+        self.assertIs(instance1, instance2, "S3Helper should return the same instance")
+
+    @test_name("S3Helper Initialization Test")
     def test_s3helper_initialization(self):
-        with patch('s3helper.S3Helper') as mock_s3helper:
+        try:
             S3Helper()
-            mock_s3helper.assert_called_once()
+        except Exception as e:
+            self.fail(f"S3Helper initialization raised an exception: {e}")
 
-    @test_name("Load tokenizer from Minio")
-    def test_auto_tokenizer_from_pretrained(self):
-        with patch('s3helper.S3HelperAutoTokenizer.from_pretrained') as mock_from_pretrained:
-            mock_tokenizer = MagicMock()
-            mock_from_pretrained.return_value = mock_tokenizer
+    @test_name("Tokenizer Loading Test")
+    @patch('s3helper.S3HelperAutoTokenizer.from_pretrained')
+    def test_tokenizer_loading(self, mock_from_pretrained):
+        mock_tokenizer = MagicMock()
+        mock_from_pretrained.return_value = mock_tokenizer
 
-            tokenizer = S3HelperAutoTokenizer.from_pretrained(self.model_name_or_path)
+        tokenizer = S3HelperAutoTokenizer.from_pretrained(self.model_name)
+        
+        mock_from_pretrained.assert_called_once_with(self.model_name)
+        self.assertIsNotNone(tokenizer)
+        self.assertEqual(tokenizer, mock_tokenizer)
 
-            mock_from_pretrained.assert_called_once_with(self.model_name_or_path)
-            self.assertEqual(tokenizer, mock_tokenizer)
+    @test_name("Dataset Loading Test")
+    @patch('s3helper.s3_load_dataset')
+    def test_dataset_loading(self, mock_s3_load_dataset):
+        mock_dataset = MagicMock()
+        mock_s3_load_dataset.return_value = mock_dataset
 
-    @test_name("Load dataset from Minio")
-    def test_s3_load_dataset(self):
-        with patch('s3helper.s3_load_dataset') as mock_load_dataset:
-            mock_dataset = MagicMock()
-            mock_load_dataset.return_value = mock_dataset
+        dataset = s3_load_dataset(self.dataset_name, file_format='parquet', split='train')
+        
+        mock_s3_load_dataset.assert_called_once_with(self.dataset_name, file_format='parquet', split='train')
+        self.assertIsNotNone(dataset)
+        self.assertEqual(dataset, mock_dataset)
 
-            dataset = s3_load_dataset(self.dataset_name_or_path, file_format='parquet', split='train')
+    @test_name("Config Loading Test")
+    @patch('s3helper.S3HelperAutoConfig.from_pretrained')
+    def test_config_loading(self, mock_from_pretrained):
+        mock_config = MagicMock()
+        mock_from_pretrained.return_value = mock_config
 
-            mock_load_dataset.assert_called_once_with(self.dataset_name_or_path, file_format='parquet', split='train')
-            self.assertEqual(dataset, mock_dataset)
+        config = S3HelperAutoConfig.from_pretrained(self.model_name)
+        
+        mock_from_pretrained.assert_called_once_with(self.model_name)
+        self.assertIsNotNone(config)
+        self.assertEqual(config, mock_config)
 
-    @test_name("Load Causal LM model from Minio")
-    def test_auto_model_for_causal_lm_from_pretrained(self):
-        with patch('s3helper.S3HelperAutoModelForCausalLM.from_pretrained') as mock_from_pretrained:
-            mock_model = MagicMock()
-            mock_from_pretrained.return_value = mock_model
+    @test_name("Model Loading Test")
+    @patch('s3helper.S3HelperAutoModelForCausalLM.from_pretrained')
+    def test_model_loading(self, mock_from_pretrained):
+        mock_model = MagicMock()
+        mock_from_pretrained.return_value = mock_model
 
-            model = S3HelperAutoModelForCausalLM.from_pretrained(self.model_name_or_path)
+        model = S3HelperAutoModelForCausalLM.from_pretrained(self.model_name)
+        
+        mock_from_pretrained.assert_called_once_with(self.model_name)
+        self.assertIsNotNone(model)
+        self.assertEqual(model, mock_model)
 
-            mock_from_pretrained.assert_called_once_with(self.model_name_or_path)
-            self.assertEqual(model, mock_model)
+    @test_name("S3Helper AWS Credentials Test")
+    @patch.object(S3Helper, '_S3Helper__instance', None)  # Reset singleton for this test
+    @patch('boto3.client')
+    def test_s3helper_aws_credentials(self, mock_boto3_client):
+        S3Helper()
+        mock_boto3_client.assert_called_once_with('s3')
 
-    @test_name("Load Model Config from Minio")
-    def test_auto_config_from_pretrained(self):
-        with patch('s3helper.S3HelperAutoConfig.from_pretrained') as mock_from_pretrained:
-            mock_config = MagicMock()
-            mock_from_pretrained.return_value = mock_config
-
-            config = S3HelperAutoConfig.from_pretrained(self.model_name_or_path)
-
-            mock_from_pretrained.assert_called_once_with(self.model_name_or_path)
-            self.assertEqual(config, mock_config)
-
-if __name__ == "__main__":
-    runner = CustomTestRunner(stream=sys.stdout, verbosity=2)
-    unittest.main(argv=['first-arg-is-ignored'], exit=False, testRunner=runner)
+if __name__ == '__main__':
+    runner = CustomTestRunner()
+    test_suite = unittest.TestLoader().loadTestsFromTestCase(TestS3Helper)
+    result = runner.run(test_suite)
     runner.print_results()
