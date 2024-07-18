@@ -20,6 +20,7 @@ jobs:
         pip install -e .
     
     - name: Run test_flow.py
+      working-directory: ./tests
       run: python test_flows.py
       env:
         S3_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY_ID }}
