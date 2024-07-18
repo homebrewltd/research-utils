@@ -86,6 +86,7 @@ class TestS3Helper(unittest.TestCase):
         S3Helper()
 
     @test_name("Tokenizer Loading Test")
+    @patch('s3helper.S3HelperAutoTokenizer.from_pretrained')
     def test_tokenizer_loading(self, mock_from_pretrained):
         mock_tokenizer = MagicMock()
         mock_from_pretrained.return_value = mock_tokenizer
@@ -106,6 +107,7 @@ class TestS3Helper(unittest.TestCase):
         except Exception as e:
             self.fail(f"s3_load_dataset raised an exception: {e}")
     @test_name("Config Loading Test")
+    @patch('s3helper.S3HelperAutoConfig.from_pretrained')
     def test_config_loading(self, mock_from_pretrained):
         mock_config = MagicMock()
         mock_from_pretrained.return_value = mock_config
@@ -117,6 +119,7 @@ class TestS3Helper(unittest.TestCase):
         self.assertEqual(config, mock_config)
 
     @test_name("Model Loading Test")
+    @patch('s3helper.S3HelperAutoModelForCausalLM.from_pretrained')
     def test_model_loading(self, mock_from_pretrained):
         mock_model = MagicMock()
         mock_from_pretrained.return_value = mock_model
